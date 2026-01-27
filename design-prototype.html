@@ -1,0 +1,297 @@
+    <title>Lin Hongji | Terminal Portfolio Prototype v3</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'term-bg': '#0d1117',
+                        'term-green': '#238636',
+                        'term-blue': '#58a6ff',
+                        'term-cyan': '#3fb950',
+                        'term-gray': '#30363d',
+                        'neon-cyan': '#00f3ff',
+                    },
+                    fontFamily: {
+                        sans: ['"Inter"', 'sans-serif'],
+                        mono: ['"Fira Code"', '"JetBrains Mono"', 'monospace'],
+                    },
+                    animation: {
+                        'cursor': 'cursor .75s step-end infinite',
+                    },
+                    keyframes: {
+                        cursor: {
+                            '0%, 100%': { opacity: '1' },
+                            '50%': { opacity: '0' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            overflow-x: hidden;
+        }
+        
+        /* V1 的网格背景回归 */
+        .bg-grid {
+            background-size: 50px 50px;
+            background-image: 
+                linear-gradient(to right, rgba(88, 166, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(88, 166, 255, 0.05) 1px, transparent 1px);
+        }
+        
+        /* 扫描线效果 */
+        .scanline {
+            width: 100%;
+            height: 100px;
+            z-index: 9999;
+            background: linear-gradient(0deg, rgba(0,0,0,0) 0%, rgba(0, 243, 255, 0.03) 50%, rgba(0,0,0,0) 100%);
+            opacity: 0.5;
+            position: fixed;
+            bottom: 100%;
+            animation: scanline 8s linear infinite;
+            pointer-events: none;
+        }
+        @keyframes scanline {
+            0% { bottom: 100%; }
+            100% { bottom: -100px; }
+        }
+
+        /* 终端窗口风格 */
+        .terminal-window {
+            background: rgba(13, 17, 23, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid #30363d;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        
+        .glow-text {
+            text-shadow: 0 0 10px rgba(88, 166, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <div class="scanline"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { motion, AnimatePresence } = window.Motion;
+
+        // 模拟数据
+        const experiences = [
+            {
+                id: 1,
+                company: "优课达（杭州）网络有限公司",
+                role: "后端开发实习生",
+                date: "2025.07 - 2025.08",
+                cmd: "./show_experience --id=1",
+                details: [
+                    "深度参与AI智能体产品的后端迭代，重点负责ASR、TTS服务集成。",
+                    "主导后端核心通信模块开发，全链路通信延迟控制在500ms以内。",
+                    "引入WebSocket三协程模型，实现IO与业务处理完全解耦。",
+                    "遵循TDD开发准则，编写30+例单元测试，覆盖核心路径。"
+                ]
+            },
+            {
+                id: 2,
+                company: "南京南方电讯有限公司",
+                role: "后端开发实习生",
+                date: "2025.12 - 2026.01",
+                cmd: "./show_experience --id=2",
+                details: [
+                    "会议/会议室列表接口性能重构：将数据库交互次数从O(N)降为O(1)。",
+                    "通过Java 8 Stream构建内存索引实现Hash Join，接口响应时间降低70%+。",
+                    "创新采用前缀匹配索引，优化后在TPS50场景下RT<100ms。"
+                ]
+            }
+        ];
+
+        const Typewriter = ({ text, delay = 0 }) => {
+            const [display, setDisplay] = useState('');
+            
+            useEffect(() => {
+                let i = 0;
+                const startDelay = setTimeout(() => {
+                    const timer = setInterval(() => {
+                        setDisplay(text.slice(0, i));
+                        i++;
+                        if (i > text.length) clearInterval(timer);
+                    }, 50);
+                    return () => clearInterval(timer);
+                }, delay);
+                return () => clearTimeout(startDelay);
+            }, [text, delay]);
+
+            return <span>{display}</span>;
+        };
+
+        const App = () => {
+            const [selectedId, setSelectedId] = useState(null);
+
+            return (
+                <div className="min-h-screen font-sans bg-grid relative pb-20 selection:bg-term-blue selection:text-white">
+                    
+                    {/* 顶部模拟 Mac/Linux 终端栏 */}
+                    <div className="fixed top-0 left-0 right-0 h-8 bg-[#161b22] border-b border-term-gray flex items-center px-4 z-50">
+                        <div className="flex space-x-2">
+                            <div className="w-3 h-3 rounded-full bg-[#ff5f56]"></div>
+                            <div className="w-3 h-3 rounded-full bg-[#ffbd2e]"></div>
+                            <div className="w-3 h-3 rounded-full bg-[#27c93f]"></div>
+                        </div>
+                        <div className="mx-auto text-xs text-gray-500 font-mono">linhongji@portfolio:~</div>
+                    </div>
+
+                    <div className="max-w-5xl mx-auto pt-24 px-4">
+                        
+                        {/* Hero Section: 终端交互风格 */}
+                        <header className="mb-20">
+                            <motion.div 
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="font-mono text-lg md:text-xl space-y-2"
+                            >
+                                <div className="text-term-blue">
+                                    <span className="text-term-green">➜</span> <span className="text-term-blue">~</span> <span className="text-white">whoami</span>
+                                </div>
+                                <div className="pl-4 text-gray-300 border-l-2 border-term-gray">
+                                    <h1 className="text-4xl md:text-6xl font-bold text-white mb-2 tracking-tight">Lin Hongji</h1>
+                                    <p className="text-term-blue mb-4">Backend Developer / Distributed Systems Enthusiast</p>
+                                    <p className="max-w-2xl text-gray-400 font-sans text-base leading-relaxed">
+                                        <Typewriter text="正在构建高性能、高可用的后端架构。来自南京信息工程大学软件工程实验班。专注于 Java, Spring Cloud, 分布式一致性解决方案。" delay={500} />
+                                        <span className="inline-block w-2 h-5 bg-term-blue align-middle animate-cursor ml-1"></span>
+                                    </p>
+                                </div>
+                            </motion.div>
+                            
+                            {/* 快速导航作为命令别名 */}
+                            <div className="mt-8 font-mono text-sm grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="p-4 border border-term-gray rounded-lg bg-[#161b22] hover:border-term-blue transition-colors group cursor-pointer">
+                                    <span className="text-term-green">$</span> cat ./skills.json
+                                    <div className="mt-2 text-gray-400 group-hover:text-white transition-colors">
+                                        Java, Spring Cloud, MySQL, Redis, Kafka...
+                                    </div>
+                                </div>
+                                <div className="p-4 border border-term-gray rounded-lg bg-[#161b22] hover:border-term-blue transition-colors group cursor-pointer">
+                                    <span className="text-term-green">$</span> ls ./social_links/
+                                    <div className="mt-2 text-gray-400 group-hover:text-white transition-colors">
+                                        github.com, bilibili.com, email...
+                                    </div>
+                                </div>
+                            </div>
+                        </header>
+
+                        {/* Experience Timeline */}
+                        <section>
+                            <div className="flex items-center mb-8 font-mono text-term-blue">
+                                <span className="text-term-green mr-2">➜</span> ~/experiences
+                            </div>
+                            
+                            <div className="space-y-6 relative pl-8 border-l border-term-gray ml-2">
+                                {experiences.map((exp, index) => (
+                                    <motion.div 
+                                        key={exp.id}
+                                        layoutId={`card-${exp.id}`}
+                                        onClick={() => setSelectedId(exp.id)}
+                                        className="cursor-pointer group relative"
+                                        initial={{ opacity: 0, x: -20 }}
+                                        whileInView={{ opacity: 1, x: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ duration: 0.3, delay: index * 0.1 }}
+                                    >
+                                        {/* 装饰性连接线 */}
+                                        <div className="absolute -left-[41px] top-6 w-4 h-[1px] bg-term-gray group-hover:bg-term-blue transition-colors"></div>
+                                        <div className="absolute -left-[45px] top-[21px] w-2 h-2 rounded-full bg-[#161b22] border border-term-gray group-hover:border-term-blue group-hover:bg-term-blue transition-colors"></div>
+
+                                        <div className="terminal-window p-5 rounded-lg border border-term-gray group-hover:border-term-blue/50 transition-all hover:translate-x-1">
+                                            <div className="font-mono text-xs text-gray-500 mb-2 border-b border-term-gray/30 pb-2 flex justify-between">
+                                                <span>{exp.cmd}</span>
+                                                <span>{exp.date}</span>
+                                            </div>
+                                            <div className="flex justify-between items-start mb-1">
+                                                <h3 className="text-lg font-bold text-white group-hover:text-term-blue transition-colors">{exp.company}</h3>
+                                            </div>
+                                            <p className="text-term-blue text-sm mb-2">{exp.role}</p>
+                                            <p className="text-gray-400 text-sm">{exp.desc}</p>
+                                            <div className="mt-3 text-xs font-mono text-term-green opacity-0 group-hover:opacity-100 transition-opacity">
+                                                [Click to expand output]
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        </section>
+                    </div>
+
+                    {/* 详情弹窗 (Terminal Overlay) */}
+                    <AnimatePresence>
+                        {selectedId && (
+                            <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
+                                <motion.div 
+                                    initial={{ opacity: 0 }} 
+                                    animate={{ opacity: 1 }} 
+                                    exit={{ opacity: 0 }}
+                                    onClick={() => setSelectedId(null)}
+                                    className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+                                />
+                                <motion.div 
+                                    layoutId={`card-${selectedId}`}
+                                    className="w-full max-w-3xl bg-[#0d1117] border border-term-gray rounded-xl overflow-hidden relative z-10 shadow-2xl font-mono"
+                                >
+                                    {/* 模拟终端标题栏 */}
+                                    <div className="bg-[#161b22] px-4 py-2 border-b border-term-gray flex justify-between items-center">
+                                        <div className="text-xs text-gray-400">user@linhongji: ~/view_details</div>
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); setSelectedId(null); }}
+                                            className="text-gray-400 hover:text-white"
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                    
+                                    <div className="p-6 md:p-8 max-h-[80vh] overflow-y-auto">
+                                        <div className="mb-6">
+                                            <span className="text-term-green">root@server</span>:<span className="text-term-blue">~</span>$ cat {experiences.find(e => e.id === selectedId).company.replace(/ /g, '_')}.log
+                                        </div>
+
+                                        <div className="pl-2 border-l-2 border-term-gray/30 space-y-4">
+                                            <div>
+                                                <h2 className="text-xl font-bold text-white mb-1">{experiences.find(e => e.id === selectedId).company}</h2>
+                                                <p className="text-gray-500 text-sm">{experiences.find(e => e.id === selectedId).role} | {experiences.find(e => e.id === selectedId).date}</p>
+                                            </div>
+                                            
+                                            <div className="space-y-2 text-sm md:text-base text-gray-300">
+                                                {experiences.find(e => e.id === selectedId).details.map((detail, idx) => (
+                                                    <div key={idx} className="flex items-start">
+                                                        <span className="text-term-green mr-2">➜</span>
+                                                        <span>{detail}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            
+                                            <div className="pt-4 text-term-blue text-xs animate-pulse">
+                                                _ End of file
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            </div>
+                        )}
+                    </AnimatePresence>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
