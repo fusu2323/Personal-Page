@@ -64,10 +64,22 @@ export const SkillsInteractive: React.FC = () => {
     }
   }, [stage, playEnter, playExpand]);
 
-  const handleStart = () => {
-    if (stage === 'idle') {
-      playEnter();
-      setStage('loading');
+  const handleSkillClick = (skillName: string) => {
+    // Map skill names to roadmap IDs (simple mapping logic)
+    const roadmapId = skillName.toLowerCase().replace(/\s+/g, '');
+    // Try to find exact match or partial match in roadmap items
+    // Ideally, we should have a mapping, but for now let's try direct ID match logic
+    const element = document.getElementById(`roadmap-${roadmapId}`);
+    
+    if (element) {
+       element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+       // Add highlight effect
+       element.classList.add('ring-2', 'ring-term-blue');
+       setTimeout(() => element.classList.remove('ring-2', 'ring-term-blue'), 2000);
+    } else {
+       // Fallback: just scroll to roadmap section
+       const section = document.getElementById('roadmap');
+       if (section) section.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
@@ -84,7 +96,7 @@ export const SkillsInteractive: React.FC = () => {
           stage === 'idle' ? "cursor-pointer hover:border-term-blue" : ""
         )}
       >
-        <div onClick={handleStart} className="h-full">
+        <div onClick={() => stage === 'idle' && setStage('loading')} className="h-full">
           {/* Idle State */}
           {stage === 'idle' && (
             <div className="h-full flex flex-col justify-center items-center text-gray-500 group">
@@ -141,7 +153,11 @@ export const SkillsInteractive: React.FC = () => {
                           transition={{ delay: idx * 0.1 + i * 0.05 }}
                           whileHover={{ scale: 1.1, textShadow: "0 0 8px rgb(56, 189, 248)" }}
                           onHoverStart={playHover}
-                          className="px-3 py-1 bg-term-gray/50 rounded text-sm text-gray-300 hover:text-white hover:bg-term-blue/20 cursor-default border border-transparent hover:border-term-blue/50 transition-all relative group"
+                          className="px-3 py-1 bg-term-gray/50 rounded text-sm text-gray-300 hover:text-white hover:bg-term-blue/20 cursor-pointer border border-transparent hover:border-term-blue/50 transition-all relative group"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSkillClick(skill);
+                          }}
                         >
                           {skill}
                           {/* Tooltip */}

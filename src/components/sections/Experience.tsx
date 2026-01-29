@@ -1,23 +1,238 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TerminalWindow } from '../ui/TerminalWindow';
 import { experiences } from '@/data/resume';
+import { FaSearch } from 'react-icons/fa';
+import { useSound } from '@/hooks/useSound';
+import { FaCircleXmark, FaSpinner, FaDatabase, FaBolt, FaSitemap, FaListCheck } from 'react-icons/fa6';
+
+// SQL Visualization Components
+const SqlVisualizer: React.FC<{ query: string; onComplete: () => void }> = ({ query, onComplete }) => {
+  const [step, setStep] = useState<'lexing' | 'ast' | 'executing'>('lexing');
+  
+  useEffect(() => {
+    // Sequence the animations
+    const timer1 = setTimeout(() => setStep('ast'), 2000);
+    const timer2 = setTimeout(() => setStep('executing'), 4000);
+    const timer3 = setTimeout(onComplete, 6500);
+    
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+    };
+  }, [onComplete]);
+
+  return (
+    <div className="mb-8 bg-[#0d1117] border border-dashed border-term-gray rounded p-6 font-mono text-xs overflow-hidden relative min-h-[200px]">
+      <div className="absolute top-2 right-2 text-gray-600 text-[10px]">SQL_ENGINE_V1.0</div>
+      
+      {/* Lexical Analysis Stage */}
+      {step === 'lexing' && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <div className="text-term-blue mb-4 font-bold">&gt; LEXICAL ANALYSIS (TOKENIZATION)</div>
+          <div className="flex flex-wrap gap-2">
+            {['SELECT', '*', 'FROM', 'experiences', 'WHERE', 'keyword', 'LIKE', `'%${query}%'`].map((token, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="bg-gray-800 text-white px-2 py-1 rounded border border-gray-600 shadow-sm"
+              >
+                <span className="text-gray-500 text-[8px] block mb-0.5">TOKEN_{i}</span>
+                {token}
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      )}
+
+      {/* AST Generation Stage */}
+      {step === 'ast' && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex justify-center items-center h-full pt-4">
+           <div className="text-term-blue absolute top-6 left-6 font-bold">&gt; AST GENERATION</div>
+           <div className="relative w-full max-w-md h-[120px]">
+              {/* Root */}
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-0 left-1/2 -translate-x-1/2 bg-term-green/20 text-term-green border border-term-green px-3 py-1 rounded z-10">SELECT_STMT</motion.div>
+              
+              {/* Branches */}
+              <svg className="absolute inset-0 w-full h-full pointer-events-none">
+                <motion.path d="M 220 30 L 100 80" stroke="#30363d" strokeWidth="2" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.5 }} />
+                <motion.path d="M 220 30 L 220 80" stroke="#30363d" strokeWidth="2" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.5 }} />
+                <motion.path d="M 220 30 L 340 80" stroke="#30363d" strokeWidth="2" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.5 }} />
+              </svg>
+
+              {/* Leaves */}
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3 }} className="absolute bottom-0 left-[20%] bg-gray-800 px-2 py-1 rounded border border-gray-600">TARGET_LIST</motion.div>
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.4 }} className="absolute bottom-0 left-[50%] -translate-x-1/2 bg-gray-800 px-2 py-1 rounded border border-gray-600">FROM_CLAUSE</motion.div>
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.5 }} className="absolute bottom-0 right-[20%] bg-gray-800 px-2 py-1 rounded border border-gray-600">WHERE_CLAUSE</motion.div>
+           </div>
+        </motion.div>
+      )}
+
+      {/* Execution Stage */}
+      {step === 'executing' && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
+           <div className="text-term-blue mb-2 font-bold flex justify-between">
+             <span>&gt; EXECUTOR (TABLE SCAN)</span>
+             <span className="text-gray-500">PTR: 0x8291A</span>
+           </div>
+           <div className="space-y-1 relative">
+             {/* Scanline */}
+             <motion.div 
+               className="absolute left-0 right-0 h-6 bg-term-green/10 border-y border-term-green/30 z-10 pointer-events-none"
+               initial={{ top: 0 }}
+               animate={{ top: "100%" }}
+               transition={{ duration: 1.5, ease: "linear", repeat: 1 }}
+             />
+             
+             {/* Mock Rows */}
+             {[1, 2, 3, 4].map((i) => (
+               <div key={i} className="flex gap-4 text-gray-600 border-b border-gray-800/50 pb-1 font-mono text-[10px]">
+                 <span className="w-8 text-gray-700">ID_{i}</span>
+                 <span className="flex-1">0x{Math.random().toString(16).slice(2, 10).toUpperCase()}...</span>
+                 <span className="w-16">InnoDB</span>
+               </div>
+             ))}
+             
+             <div className="mt-2 text-term-green animate-pulse">&gt; Found matching records...</div>
+           </div>
+        </motion.div>
+      )}
+    </div>
+  );
+};
 
 export const Experience: React.FC = () => {
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState(''); // Visual input
+  const [activeQuery, setActiveQuery] = useState(''); // Actual filter
+  const [sqlState, setSqlState] = useState<'idle' | 'running' | 'completed'>('idle');
+  
+  const [deployingId, setDeployingId] = useState<number | null>(null);
+  const [pipelineState, setPipelineState] = useState<'idle' | 'running' | 'success' | 'failed'>('idle');
+  const [pipelineSteps, setPipelineSteps] = useState<string[]>([]);
+  const [deployedCache, setDeployedCache] = useState<Set<number>>(new Set());
+  
+  const { playType, playEnter } = useSound();
+
+  const filteredExperiences = experiences.filter(exp => {
+    if (!activeQuery) return true;
+    const query = activeQuery.toLowerCase().replace(/['";]/g, ''); 
+    return (
+      (exp.company || '').toLowerCase().includes(query) ||
+      (exp.role || '').toLowerCase().includes(query) ||
+      (exp.details || []).some(d => (d || '').toLowerCase().includes(query)) ||
+      (exp.desc || '').toLowerCase().includes(query)
+    );
+  });
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      setSqlState('running');
+      setActiveQuery(''); // Clear current filter during animation
+      playEnter();
+    }
+  };
+
+  const handleCardClick = (id: number) => {
+    if (deployedCache.has(id)) {
+      setSelectedId(id);
+      return;
+    }
+
+    playEnter();
+    setDeployingId(id);
+    setPipelineState('running');
+    setPipelineSteps([]);
+    
+    const isFailureScenario = Math.random() > 0.8; 
+    
+    const steps = [
+      "Compiling assets...",
+      "Running unit tests (30/30 passed)...",
+      "Building Docker image...",
+      "Pushing to registry..."
+    ];
+
+    const runStep = (currentIndex = 0) => {
+      if (currentIndex < steps.length) {
+        setPipelineSteps(prev => [...prev, steps[currentIndex]]);
+        playType();
+        
+        if (isFailureScenario && currentIndex === 2) {
+           setPipelineState('failed');
+           setTimeout(() => {
+             setPipelineSteps(prev => [...prev, "⚠ Build failed. Retrying with --no-cache...", "Building Docker image (Attempt 2)..."]);
+             setPipelineState('running');
+             const nextStepIndex = currentIndex + 1;
+             setTimeout(() => runStep(nextStepIndex), 1000);
+           }, 1500);
+           return;
+        }
+
+        const nextStepIndex = currentIndex + 1;
+        setTimeout(() => runStep(nextStepIndex), 600);
+      } else {
+        setPipelineState('success');
+        setDeployedCache(prev => new Set(prev).add(id));
+        setTimeout(() => {
+          setDeployingId(null);
+          setSelectedId(id);
+          setPipelineState('idle');
+        }, 1000);
+      }
+    };
+
+    runStep();
+  };
 
   return (
-    <section className="mb-20">
-      <div className="flex items-center mb-8 font-mono text-term-blue text-xl">
-        <span className="text-term-green mr-2">➜</span> ~/experiences
+    <section className="mb-20" id="experience">
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center font-mono text-term-blue text-xl">
+          <span className="text-term-green mr-2">➜</span> ~/experiences
+        </div>
+        
+        {/* SQL Search Input */}
+        <div className="hidden md:flex items-center bg-[#0d1117] border border-term-gray rounded px-3 py-1.5 text-sm font-mono w-96 group focus-within:border-term-blue transition-colors">
+          <span className="text-term-blue mr-2">SELECT * FROM experiences WHERE</span>
+          <input 
+            type="text" 
+            placeholder="keyword LIKE '%java%'"
+            className="bg-transparent border-none outline-none text-white w-full placeholder-gray-600"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={handleSearchKeyDown}
+          />
+          <FaSearch className="text-gray-500 ml-2 group-focus-within:text-term-blue" />
+        </div>
       </div>
       
+      {/* SQL Execution Overlay */}
+      <AnimatePresence>
+        {sqlState === 'running' && (
+           <SqlVisualizer 
+             query={searchQuery} 
+             onComplete={() => {
+               setActiveQuery(searchQuery);
+               setSqlState('completed');
+               setTimeout(() => setSqlState('idle'), 1000); // Fade out after showing results
+             }} 
+           />
+        )}
+      </AnimatePresence>
+
       <div className="space-y-6 relative pl-8 border-l border-term-gray ml-2">
-        {experiences.map((exp, index) => (
+        {filteredExperiences.length === 0 && sqlState !== 'running' ? (
+           <div className="text-gray-500 font-mono py-8">0 rows returned. (0.00 sec)</div>
+        ) : (
+          filteredExperiences.map((exp, index) => (
           <motion.div 
             key={exp.id}
             layoutId={`card-${exp.id}`}
-            onClick={() => setSelectedId(exp.id)}
+            onClick={() => handleCardClick(exp.id)}
             className="cursor-pointer group relative"
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -35,16 +250,62 @@ export const Experience: React.FC = () => {
               </div>
               <div className="flex justify-between items-start mb-1">
                 <h3 className="text-lg font-bold text-white group-hover:text-term-blue transition-colors">{exp.company}</h3>
+                {deployedCache.has(exp.id) && (
+                  <span className="text-[10px] bg-term-green/10 text-term-green px-2 py-0.5 rounded border border-term-green/30">Deployed</span>
+                )}
               </div>
               <p className="text-term-blue text-sm mb-2">{exp.role}</p>
               <p className="text-gray-400 text-sm">{exp.desc}</p>
               <div className="mt-3 text-xs font-mono text-term-green opacity-0 group-hover:opacity-100 transition-opacity">
-                [Click to expand output]
+                {deployedCache.has(exp.id) ? "[Click to view logs]" : "[Click to execute deployment pipeline]"}
               </div>
             </TerminalWindow>
           </motion.div>
-        ))}
+        )))}
       </div>
+
+      {/* CI/CD Pipeline Overlay */}
+      <AnimatePresence>
+        {deployingId && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[110] flex items-center justify-center bg-black/90 backdrop-blur-sm"
+          >
+            <div className="font-mono text-sm w-full max-w-lg p-6 bg-[#0d1117] border border-term-gray rounded-lg shadow-2xl">
+              <div className="text-term-blue mb-4 font-bold text-lg flex items-center justify-between">
+                <span>Deploying to Production...</span>
+                {pipelineState === 'running' && <FaSpinner className="animate-spin" />}
+                {pipelineState === 'failed' && <FaCircleXmark className="text-red-500" />}
+              </div>
+              <div className="space-y-2 h-[200px] overflow-y-auto custom-scrollbar p-2 bg-black/50 rounded">
+                 {pipelineSteps.map((step, idx) => (
+                   <motion.div
+                     key={idx}
+                     initial={{ opacity: 0, x: -10 }}
+                     animate={{ opacity: 1, x: 0 }}
+                     className={`flex items-center ${step.includes('failed') ? 'text-red-500' : 'text-gray-400'}`}
+                   >
+                     <span className={`mr-2 ${step.includes('failed') ? 'text-red-500' : 'text-term-blue'}`}>➜</span>
+                     {step}
+                   </motion.div>
+                 ))}
+                 
+                 {pipelineState === 'success' && (
+                    <motion.div 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-term-green mt-4 font-bold border-t border-gray-800 pt-2"
+                    >
+                      ✔ Deployment Successful!
+                    </motion.div>
+                 )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Detail Overlay */}
       <AnimatePresence>

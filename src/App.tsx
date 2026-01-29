@@ -2,11 +2,18 @@ import { Hero } from '@/components/sections/Hero';
 import { Experience } from '@/components/sections/Experience';
 import { SkillsInteractive } from '@/components/sections/SkillsInteractive';
 import { SocialInteractive } from '@/components/sections/SocialInteractive';
+import { Roadmap } from '@/components/sections/Roadmap';
+import { CommandPalette } from '@/components/ui/CommandPalette';
+import { SystemMonitor } from '@/components/ui/SystemMonitor';
+import { ResumeDownloader } from '@/components/ui/ResumeDownloader';
 
 function App() {
   return (
     <div className="min-h-screen bg-grid font-sans selection:bg-term-blue selection:text-white pb-20">
       <div className="scanline"></div>
+      <CommandPalette />
+      <SystemMonitor />
+      <ResumeDownloader />
       
       {/* Top Bar */}
       <div className="fixed top-0 left-0 right-0 h-8 bg-[#161b22] border-b border-term-gray flex items-center px-4 z-50">
@@ -21,10 +28,16 @@ function App() {
       <main className="max-w-5xl mx-auto px-4 pt-8">
         <Hero />
         <Experience />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <SkillsInteractive />
-          <SocialInteractive />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-20">
+          <div id="skills">
+            <SkillsInteractive />
+          </div>
+          <div id="social">
+            <SocialInteractive />
+          </div>
         </div>
+        
+        <Roadmap />
         
         <footer className="text-center text-gray-600 text-sm py-8 border-t border-term-gray/30 mt-20 font-mono">
           <p>© 2026 Lin Hongji. All Systems Operational.</p>
