@@ -54,7 +54,7 @@ export const LandingOverlay = ({ onEnter }: LandingOverlayProps) => {
               SYSTEM<br/>FAILURE
            </h1>
            <p className="text-term-green font-mono text-xl tracking-[0.5em] animate-pulse">
-              &gt CRITICAL_ERROR: REALITY_NOT_FOUND
+              &gt; CRITICAL_ERROR: REALITY_NOT_FOUND
            </p>
            <div className="mt-20 animate-bounce text-gray-500 font-mono text-sm">
               SCROLL TO INITIALIZE RECOVERY
@@ -83,10 +83,10 @@ export const LandingOverlay = ({ onEnter }: LandingOverlayProps) => {
          
          <div className="z-20 text-center bg-black/80 p-8 rounded border border-gray-800 backdrop-blur-sm max-w-md mx-4">
             <p className="text-term-green font-mono leading-relaxed">
-               &gt ATTEMPTING TO REASSEMBLE DATA FRAGMENTS...<br/>
-               &gt FOUND: BACKEND SKILLS<br/>
-               &gt FOUND: ARCHITECTURE PATTERNS<br/>
-               &gt FOUND: GEEK SPIRIT
+               &gt; ATTEMPTING TO REASSEMBLE DATA FRAGMENTS...<br/>
+               &gt; FOUND: BACKEND SKILLS<br/>
+               &gt; FOUND: ARCHITECTURE PATTERNS<br/>
+               &gt; FOUND: GEEK SPIRIT
             </p>
          </div>
       </section>
