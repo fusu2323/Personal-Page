@@ -50,23 +50,67 @@ const SqlVisualizer: React.FC<{ query: string; onComplete: () => void }> = ({ qu
 
       {/* AST Generation Stage */}
       {step === 'ast' && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex justify-center items-center h-full pt-4">
-           <div className="text-term-blue absolute top-6 left-6 font-bold">&gt; AST GENERATION</div>
-           <div className="relative w-full max-w-md h-[120px]">
-              {/* Root */}
-              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-0 left-1/2 -translate-x-1/2 bg-term-green/20 text-term-green border border-term-green px-3 py-1 rounded z-10">SELECT_STMT</motion.div>
-              
-              {/* Branches */}
-              <svg className="absolute inset-0 w-full h-full pointer-events-none">
-                <motion.path d="M 220 30 L 100 80" stroke="#30363d" strokeWidth="2" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.5 }} />
-                <motion.path d="M 220 30 L 220 80" stroke="#30363d" strokeWidth="2" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.5 }} />
-                <motion.path d="M 220 30 L 340 80" stroke="#30363d" strokeWidth="2" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.5 }} />
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center justify-center h-full pt-4 relative">
+           <div className="text-term-blue absolute top-2 left-4 font-bold text-xs">&gt; AST GENERATION</div>
+           
+           <div className="relative w-full max-w-[400px] h-[160px] mt-4">
+              {/* Connection Lines (SVG) */}
+              <svg className="absolute inset-0 w-full h-full pointer-events-none overflow-visible">
+                {/* Root to Children */}
+                <motion.path d="M 200 30 L 80 80" stroke="#30363d" strokeWidth="2" fill="none" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.4, delay: 0.2 }} />
+                <motion.path d="M 200 30 L 200 80" stroke="#30363d" strokeWidth="2" fill="none" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.4, delay: 0.2 }} />
+                <motion.path d="M 200 30 L 320 80" stroke="#30363d" strokeWidth="2" fill="none" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.4, delay: 0.2 }} />
+                
+                {/* Child to Leaf (Example) */}
+                <motion.path d="M 320 100 L 320 130" stroke="#30363d" strokeWidth="1" fill="none" strokeDasharray="4 2" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.3, delay: 0.8 }} />
               </svg>
 
-              {/* Leaves */}
-              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.3 }} className="absolute bottom-0 left-[20%] bg-gray-800 px-2 py-1 rounded border border-gray-600">TARGET_LIST</motion.div>
-              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.4 }} className="absolute bottom-0 left-[50%] -translate-x-1/2 bg-gray-800 px-2 py-1 rounded border border-gray-600">FROM_CLAUSE</motion.div>
-              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.5 }} className="absolute bottom-0 right-[20%] bg-gray-800 px-2 py-1 rounded border border-gray-600">WHERE_CLAUSE</motion.div>
+              {/* Root Node */}
+              <motion.div 
+                initial={{ scale: 0, y: -20 }} 
+                animate={{ scale: 1, y: 0 }} 
+                className="absolute top-0 left-1/2 -translate-x-1/2 bg-[#1f2428] text-term-green border border-term-green px-3 py-1.5 rounded-full z-20 shadow-[0_0_15px_rgba(39,201,63,0.3)] font-bold text-[10px]"
+              >
+                SELECT_STMT
+              </motion.div>
+
+              {/* Level 1 Nodes */}
+              <motion.div 
+                initial={{ scale: 0, opacity: 0 }} 
+                animate={{ scale: 1, opacity: 1 }} 
+                transition={{ delay: 0.4 }} 
+                className="absolute top-[80px] left-[20%] -translate-x-1/2 bg-[#1f2428] text-blue-400 border border-blue-400/50 px-2 py-1 rounded z-10 text-[9px]"
+              >
+                TARGET_LIST
+              </motion.div>
+
+              <motion.div 
+                initial={{ scale: 0, opacity: 0 }} 
+                animate={{ scale: 1, opacity: 1 }} 
+                transition={{ delay: 0.5 }} 
+                className="absolute top-[80px] left-[50%] -translate-x-1/2 bg-[#1f2428] text-yellow-400 border border-yellow-400/50 px-2 py-1 rounded z-10 text-[9px]"
+              >
+                FROM_CLAUSE
+              </motion.div>
+
+              <motion.div 
+                initial={{ scale: 0, opacity: 0 }} 
+                animate={{ scale: 1, opacity: 1 }} 
+                transition={{ delay: 0.6 }} 
+                className="absolute top-[80px] left-[80%] -translate-x-1/2 bg-[#1f2428] text-purple-400 border border-purple-400/50 px-2 py-1 rounded z-10 text-[9px]"
+              >
+                WHERE_CLAUSE
+              </motion.div>
+
+              {/* Leaf Nodes (Details) */}
+              <motion.div 
+                initial={{ y: -10, opacity: 0 }} 
+                animate={{ y: 0, opacity: 1 }} 
+                transition={{ delay: 0.9 }} 
+                className="absolute top-[130px] left-[80%] -translate-x-1/2 text-gray-500 text-[8px] bg-black/30 px-1 rounded"
+              >
+                expr: LIKE '%{query}%'
+              </motion.div>
            </div>
         </motion.div>
       )}

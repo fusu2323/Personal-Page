@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Hero } from '@/components/sections/Hero';
 import { Experience } from '@/components/sections/Experience';
 import { SkillsInteractive } from '@/components/sections/SkillsInteractive';
@@ -6,10 +7,20 @@ import { Roadmap } from '@/components/sections/Roadmap';
 import { CommandPalette } from '@/components/ui/CommandPalette';
 import { SystemMonitor } from '@/components/ui/SystemMonitor';
 import { ResumeDownloader } from '@/components/ui/ResumeDownloader';
+import { LandingOverlay } from '@/components/LandingOverlay';
+import { AnimatePresence } from 'framer-motion';
 
 function App() {
+  const [showLanding, setShowLanding] = useState(true);
+
   return (
     <div className="min-h-screen bg-grid font-sans selection:bg-term-blue selection:text-white pb-20">
+      <AnimatePresence>
+        {showLanding && (
+          <LandingOverlay onEnter={() => setShowLanding(false)} />
+        )}
+      </AnimatePresence>
+      
       <div className="scanline"></div>
       <CommandPalette />
       <SystemMonitor />

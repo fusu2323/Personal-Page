@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>原生CSS 3D笔记本旋转动画</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            width: 100vw;
+            height: 100vh;
+            background: #f5f5f5;
+            overflow: hidden;
+        }
+        /* 笔记本容器：核心透视容器 */
+        .macbook {
+            width: 150px;
+            height: 96px;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            margin: -75px 0 0 -48px;
+            perspective: 500px; /* 开启3D透视 */
+        }
+        /* 投影层：跟随旋转变化 */
+        .shadow {
+            position: absolute;
+            width: 60px;
+            height: 0px;
+            left: 0px;
+            top: 160px;
+            transform: rotateX(80deg) rotateY(0deg) rotateZ(0deg);
+            box-shadow: 0 0 60px 40px rgba(0, 0, 0, 0.3);
+            animation: shadow infinite 7s ease;
+        }
+        /* 核心容器：3D变换主体，所有子元素继承3D空间 */
+        .inner {
+            z-index: 20;
+            position: absolute;
+            width: 150px;
+            height: 96px;
+            left: 0;
+            top: 0;
+            transform-style: preserve-3d; /* 保留3D变换，不扁平化 */
+            transform: rotateX(-20deg) rotateY(0deg) rotateZ(0deg);
+            animation: rotate infinite 7s ease; /* 整体旋转动画 */
+        }
+        /* 屏幕层：带开合动画 */
+        .screen {
+            width: 150px;
+            height: 96px;
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            border-radius: 3px;
+            background: #333;
+            transform-style: preserve-3d;
+            transform-origin: 50% 93px; /* 以屏幕底部为旋转原点，模拟开合 */
+            transform: rotateX(0deg);
+            animation: lid-screen infinite 7s ease; /* 屏幕开合动画 */
+            background-image: linear-gradient(45deg, rgba(0, 0, 0, 0.34) 0%, rgba(0, 0, 0, 0) 100%);
+            background-position: left bottom;
+            background-size: 300px 300px;
+            box-shadow: inset 0 3px 7px #333;
+        }
+        /* 屏幕logo */
+        .screen .logo {
+            position: absolute;
+            width: 20px;
+            height: 24px;
+            left: 50%;
+            top: 50%;
+            margin: -12px 0 0 -10px;
+            transform: rotateY(180deg) translateZ(0.1px);
+            color: #fff;
+            font-size: 20px;
+            text-align: center;
+            line-height: 24px;
+        }
+        /* 屏幕内表面：模拟厚度 */
+        .screen .face-one {
+            width: 150px;
+            height: 96px;
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            border-radius: 3px;
+            background: #333;
+            transform: translateZ(2px); /* 向前层叠，模拟屏幕厚度 */
+            background-image: linear-gradient(45deg, rgba(0, 0, 0, 0.24) 0%, rgba(0, 0, 0, 0) 100%);
+        }
+        /* 屏幕摄像头 */
+        .screen .face-one .camera {
+            width: 3px;
+            height: 3px;
+            border-radius: 100%;
+            background: hsl(0, 3%, 19%);
+            position: absolute;
+            left: 50%;
+            top: 1px;
+            margin-left: -1.5px;
+        }
+        /* 屏幕显示区域 */
+        .screen .face-one .display {
+            width: 142px;
+            height: 80px;
+            margin: 4px;
+            background: #000;
+            background-size: 100% 100%;
+            border-radius: 1px;
+            position: relative;
+            box-shadow: inset 0 0 2px rgba(0, 0, 0, 1);
+            /* 替换为自己的背景图，注释掉则为纯黑色屏幕 */
+            /* background: url("./bg.png") no-repeat center center #000; */
+        }
+        /* 屏幕反光效果 */
+        .screen .face-one .display .shade {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 130px;
+            height: 74px;
+            background: linear-gradient(-135deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.1) 47%, rgba(255, 255, 255, 0) 48%);
+            animation: screen-shade infinite 7s ease;
+            background-size: 300px 200px;
+            background-position: 0px 0px;
+        }
+        /* 屏幕底部文字 */
+        .screen .face-one span {
+            position: absolute;
+            top: 85px;
+            left: 63px;
+            font-size: 6px;
+            color: #666;
+        }
+        /* 机身层：固定打开状态 */
+        .body {
+            width: 150px;
+            height: 96px;
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            border-radius: 3px;
+            background: #333;
+            transform-style: preserve-3d;
+            transform-origin: 50% bottom; /* 以机身底部为旋转原点 */
+            transform: rotateX(-90deg); /* 固定为打开状态 */
+            animation: lid-body infinite 7s ease;
+            background-image: linear-gradient(45deg, rgba(0, 0, 0, 0.24) 0%, rgba(0, 0, 0, 0) 100%);
+        }
+        /* 机身上表面：模拟厚度 */
+        .body .face-one {
+            width: 150px;
+            height: 96px;
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            border-radius: 3px;
+            transform-style: preserve-3d;
+            background: #333;
+            animation: lid-keyboard-area infinite 7s ease;
+            transform: translateZ(-2px); /* 向后层叠，模拟机身厚度 */
+            background-image: linear-gradient(30deg, rgba(0, 0, 0, 0.24) 0%, rgba(0, 0, 0, 0) 100%);
+        }
+        /* 触控板 */
+        .body .touchpad {
+            width: 40px;
+            height: 31px;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            border-radius: 3px;
+            margin: -44px 0 0 -18px;
+            background: #333;
+            background-image: linear-gradient(30deg, rgba(0, 0, 0, 0.24) 0%, rgba(0, 0, 0, 0) 100%);
+            box-shadow: inset 0 0 3px #888;
+        }
+        /* 键盘区域 */
+        .body .keyboard {
+            width: 130px;
+            height: 45px;
+            position: absolute;
+            left: 7px;
+            top: 41px;
+            border-radius: 3px;
+            transform-style: preserve-3d;
+            background: #333;
+            background-image: linear-gradient(30deg, rgba(0, 0, 0, 0.24) 0%, rgba(0, 0, 0, 0) 100%);
+            box-shadow: inset 0 0 3px #777;
+            padding: 0 0 0 2px;
+        }
+        /* 键盘按键：基础样式 */
+        .keyboard .key {
+            width: 6px;
+            height: 6px;
+            background: #444;
+            float: left;
+            margin: 1px;
+            transform: translateZ(-2px);
+            border-radius: 2px;
+            box-shadow: 0 -2px 0 #222; /* 模拟按键立体效果 */
+            animation: keys infinite 7s ease;
+        }
+        /* 空格键：加宽 */
+        .key.space {
+            width: 45px;
+        }
+        /* 功能键：加高 */
+        .key.f {
+            height: 3px;
+        }
+        /* 机身脚垫 */
+        .body .pad {
+            width: 5px;
+            height: 5px;
+            background: #333;
+            border-radius: 100%;
+            position: absolute;
+        }
+        .pad.one { left: 20px; top: 20px; }
+        .pad.two { right: 20px; top: 20px; }
+        .pad.three { right: 20px; bottom: 20px; }
+        .pad.four { left: 20px; bottom: 20px; }
+
+        /* ********** 所有关键帧动画 ********** */
+        /* 整体旋转：核心动画，控制笔记本三维旋转 */
+        @keyframes rotate {
+            0% { transform: rotateX(-20deg) rotateY(0deg) rotateZ(0deg); }
+            5% { transform: rotateX(-20deg) rotateY(-20deg) rotateZ(0deg); }
+            20% { transform: rotateX(30deg) rotateY(200deg) rotateZ(0deg); }
+            25% { transform: rotateX(-60deg) rotateY(150deg) rotateZ(0deg); }
+            60% { transform: rotateX(-20deg) rotateY(130deg) rotateZ(0deg); }
+            65% { transform: rotateX(-20deg) rotateY(120deg) rotateZ(0deg); }
+            80% { transform: rotateX(-20deg) rotateY(375deg) rotateZ(0deg); }
+            85% { transform: rotateX(-20deg) rotateY(357deg) rotateZ(0deg); }
+            87% { transform: rotateX(-20deg) rotateY(360deg) rotateZ(0deg); }
+            100% { transform: rotateX(-20deg) rotateY(360deg) rotateZ(0deg); }
+        }
+        /* 屏幕开合：跟随整体旋转做开合动作 */
+        @keyframes lid-screen {
+            0% { transform: rotateX(0deg); background-position: left bottom; }
+            5% { transform: rotateX(50deg); background-position: left bottom; }
+            20% { transform: rotateX(-90deg); background-position: -150px top; }
+            25% { transform: rotateX(15deg); background-position: left bottom; }
+            30% { transform: rotateX(-5deg); background-position: right top; }
+            38% { transform: rotateX(5deg); background-position: right top; }
+            48% { transform: rotateX(0deg); background-position: right top; }
+            90% { transform: rotateX(0deg); background-position: right top; }
+            100% { transform: rotateX(0deg); background-position: right center; }
+        }
+        /* 机身固定：无实际变化，仅保持同步 */
+        @keyframes lid-body {
+            0%,50%,100% { transform: rotateX(-90deg); }
+        }
+        /* 键盘区域：无实际变化，仅保持同步 */
+        @keyframes lid-keyboard-area {
+            0%,50%,100% { background-color: #333; }
+        }
+        /* 屏幕反光：跟随旋转移动反光位置 */
+        @keyframes screen-shade {
+            0% { background-position: -20px 0px; }
+            5% { background-position: -40px 0px; }
+            20% { background-position: 200px 0; }
+            50% { background-position: -200px 0; }
+            80% { background-position: 0px 0px; }
+            85% { background-position: -30px 0; }
+            90% { background-position: -20px 0; }
+            100% { background-position: -20px 0px; }
+        }
+        /* 按键阴影：跟随旋转变化按键立体阴影 */
+        @keyframes keys {
+            0% { box-shadow: 0 -2px 0 #222; }
+            5% { box-shadow: 1px -1px 0 #222; }
+            20% { box-shadow: -1px 1px 0 #222; }
+            25%,60% { box-shadow: -1px 1px 0 #222; }
+            80% { box-shadow: 0 -2px 0 #222; }
+            100% { box-shadow: 0 -2px 0 #222; }
+        }
+        /* 投影变换：跟随笔记本旋转偏移和缩放 */
+        @keyframes shadow {
+            0% { transform: rotateX(80deg) rotateY(0deg) rotateZ(0deg); box-shadow: 0 0 60px 40px rgba(0, 0, 0, 0.3); }
+            5% { transform: rotateX(80deg) rotateY(10deg) rotateZ(0deg); box-shadow: 0 0 60px 40px rgba(0, 0, 0, 0.3); }
+            20% { transform: rotateX(30deg) rotateY(-20deg) rotateZ(-20deg); box-shadow: 0 0 50px 30px rgba(0, 0, 0, 0.3); }
+            25% { transform: rotateX(80deg) rotateY(-20deg) rotateZ(50deg); box-shadow: 0 0 35px 15px rgba(0, 0, 0, 0.1); }
+            60% { transform: rotateX(80deg) rotateY(0deg) rotateZ(-50deg) translateX(30px); box-shadow: 0 0 60px 40px rgba(0, 0, 0, 0.3); }
+            100% { box-shadow: 0 0 60px 40px rgba(0, 0, 0, 0.3); }
+        }
+    </style>
+</head>
+<body>
+    <!-- macbook动画主体 -->
+    <div class="macbook">
+        <div class="inner">
+            <div class="screen">
+                <div class="face-one">
+                    <div class="camera"></div>
+                    <div class="display">
+                        <div class="shade"></div>
+                    </div>
+                    <span>LEGION</span>
+                </div>
+                <p class="logo">H</p>
+            </div>
+            <div class="body">
+                <div class="face-one">
+                    <div class="touchpad"></div>
+                    <div class="keyboard">
+                        <div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div>
+                        <div class="key space"></div>
+                        <div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div>
+                        <div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div>
+                        <div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div>
+                        <div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div>
+                        <div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div>
+                        <div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div>
+                        <div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div>
+                        <div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div>
+                        <div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div><div class="key"></div>
+                        <div class="key f"></div><div class="key f"></div><div class="key f"></div><div class="key f"></div><div class="key f"></div>
+                        <div class="key f"></div><div class="key f"></div><div class="key f"></div><div class="key f"></div><div class="key f"></div>
+                        <div class="key f"></div><div class="key f"></div><div class="key f"></div><div class="key f"></div><div class="key f"></div>
+                        <div class="key f"></div>
+                    </div>
+                </div>
+                <div class="pad one"></div>
+                <div class="pad two"></div>
+                <div class="pad three"></div>
+                <div class="pad four"></div>
+            </div>
+        </div>
+        <div class="shadow"></div>
+    </div>
+
+    <!-- 可选：JS控制（基础示例，比如暂停/播放动画） -->
+    <script>
+        // 简单JS交互：点击笔记本暂停/播放动画
+        const macbook = document.querySelector('.macbook');
+        let isPaused = false;
+        macbook.addEventListener('click', () => {
+            const inner = document.querySelector('.inner');
+            if (isPaused) {
+                // 播放动画：移除暂停样式
+                inner.style.animationPlayState = 'running';
+                document.querySelectorAll('*[animation]').forEach(el => {
+                    el.style.animationPlayState = 'running';
+                });
+            } else {
+                // 暂停动画：设置暂停样式
+                inner.style.animationPlayState = 'paused';
+                document.querySelectorAll('*').forEach(el => {
+                    el.style.animationPlayState = 'paused';
+                });
+            }
+            isPaused = !isPaused;
+        });
+    </script>
+</body>
+</html>
