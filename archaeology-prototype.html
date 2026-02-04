@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Genesis: 秒杀系统代码考古</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --term-bg: #0d1117;
+            --term-border: #30363d;
+            --term-blue: #58a6ff;
+            --term-green: #238636;
+            --term-orange: #d29922;
+            --term-red: #da3633;
+        }
+        
+        body {
+            background-color: var(--term-bg);
+            color: #c9d1d9;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .grid-bg {
+            background-image: linear-gradient(to right, #21262d 1px, transparent 1px),
+                              linear-gradient(to bottom, #21262d 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        .timeline-track {
+            position: relative;
+            height: 4px;
+            background: #21262d;
+            width: 100%;
+        }
+
+        .timeline-progress {
+            position: absolute;
+            height: 100%;
+            background: var(--term-blue);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .node-enter {
+            animation: scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .connection-line {
+            stroke-dasharray: 10;
+            animation: flow 20s linear infinite;
+        }
+
+        @keyframes flow {
+            to { stroke-dashoffset: -100; }
+        }
+
+        /* Glitch effect for refactor moments */
+        .glitch-text:hover {
+            animation: glitch 0.3s cubic-bezier(.25, .46, .45, .94) both infinite;
+            color: var(--term-red);
+        }
+
+        @keyframes glitch {
+            0% { transform: translate(0) }
+            20% { transform: translate(-2px, 2px) }
+            40% { transform: translate(-2px, -2px) }
+            60% { transform: translate(2px, 2px) }
+            80% { transform: translate(2px, -2px) }
+            100% { transform: translate(0) }
+        }
+    </style>
+</head>
+<body class="min-h-screen grid-bg overflow-x-hidden">
+
+    <!-- Header -->
+    <header class="border-b border-[var(--term-border)] bg-[var(--term-bg)]/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i data-lucide="archive" class="text-[var(--term-blue)]"></i>
+                <h1 class="font-mono font-bold text-lg tracking-tight">PROJECT_ARCHAEOLOGY <span class="text-gray-500">/ seckill-system</span></h1>
+            </div>
+            <div class="flex items-center gap-4 text-xs font-mono text-gray-500">
+                <span>STATUS: ARCHIVED</span>
+                <span>LAST_COMMIT: 2025-12-31</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-10">
+        
+        <!-- Interactive Timeline Controller -->
+        <section class="mb-12">
+            <div class="flex justify-between items-end mb-4">
+                <div class="font-mono text-sm text-[var(--term-blue)]">
+                    <span id="current-phase-label">PHASE 1: THE MONOLITH</span>
+                </div>
+                <div class="font-mono text-xs text-gray-500">DRAG SLIDER TO EVOLVE</div>
+            </div>
+            
+            <div class="relative h-16 flex items-center group">
+                <!-- Track -->
+                <div class="absolute w-full h-1 bg-[#21262d] rounded-full"></div>
+                <div id="timeline-bar" class="absolute h-1 bg-[var(--term-blue)] rounded-full w-[0%]"></div>
+                
+                <!-- Steps -->
+                <div class="absolute w-full flex justify-between px-1">
+                    <button onclick="setPhase(0)" class="w-4 h-4 rounded-full bg-[var(--term-bg)] border-2 border-[var(--term-blue)] hover:scale-125 transition-transform z-10"></button>
+                    <button onclick="setPhase(1)" class="w-4 h-4 rounded-full bg-[#21262d] border-2 border-gray-600 hover:border-[var(--term-blue)] transition-colors z-10"></button>
+                    <button onclick="setPhase(2)" class="w-4 h-4 rounded-full bg-[#21262d] border-2 border-gray-600 hover:border-[var(--term-blue)] transition-colors z-10"></button>
+                    <button onclick="setPhase(3)" class="w-4 h-4 rounded-full bg-[#21262d] border-2 border-gray-600 hover:border-[var(--term-blue)] transition-colors z-10"></button>
+                </div>
+
+                <!-- Input Range (Invisible but functional) -->
+                <input type="range" min="0" max="3" value="0" step="1" id="time-slider" 
+                       class="absolute w-full h-full opacity-0 cursor-ew-resize z-20">
+            </div>
+            
+            <div class="flex justify-between font-mono text-xs text-gray-500 mt-2">
+                <span>v1.0 (MVP)</span>
+                <span>v1.5 (Cache)</span>
+                <span>v2.0 (Microservices)</span>
+                <span>v3.0 (Cloud Native)</span>
+            </div>
+        </section>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[600px]">
+            
+            <!-- Left: Architecture Topology (Canvas/SVG area) -->
+            <div class="lg:col-span-2 bg-[#0d1117] border border-[var(--term-border)] rounded-sm relative overflow-hidden">
+                <div class="absolute top-4 left-4 z-10">
+                    <h3 class="font-mono text-xs font-bold text-gray-400 uppercase">Architecture Topology</h3>
+                </div>
+                
+                <!-- Visualization Container -->
+                <div id="arch-viz" class="w-full h-full flex items-center justify-center relative">
+                    <!-- Dynamic Content Injected Here via JS -->
+                    <div class="text-center opacity-50 font-mono text-xs animate-pulse">
+                        Rendering Architecture...
+                    </div>
+                </div>
+
+                <!-- ADR Card Overlay (Hidden by default) -->
+                <div id="adr-card" class="absolute bottom-6 right-6 w-80 bg-[#161b22]/95 border border-[var(--term-orange)] p-4 backdrop-blur transform translate-y-[120%] transition-transform duration-300 shadow-2xl">
+                    <div class="flex items-center gap-2 mb-2 text-[var(--term-orange)] font-mono text-xs font-bold">
+                        <i data-lucide="alert-triangle" class="w-3 h-3"></i>
+                        ADR-003: Redis Implementation
+                    </div>
+                    <div class="space-y-3 text-xs">
+                        <div>
+                            <span class="text-gray-500 uppercase">Context:</span>
+                            <p class="text-gray-300">MySQL CPU spiked to 95% during stress test (1000 QPS).</p>
+                        </div>
+                        <div>
+                            <span class="text-gray-500 uppercase">Decision:</span>
+                            <p class="text-gray-300">Introduce Redis for inventory caching. Write-behind strategy.</p>
+                        </div>
+                        <div>
+                            <span class="text-gray-500 uppercase">Result:</span>
+                            <p class="text-gray-300">QPS 1000 -> 5000. DB load reduced by 80%.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Code Evolution & Commits -->
+            <div class="space-y-4 flex flex-col h-full">
+                
+                <!-- Commit History -->
+                <div class="flex-1 bg-[#0d1117] border border-[var(--term-border)] rounded-sm p-4 overflow-hidden flex flex-col">
+                    <h3 class="font-mono text-xs font-bold text-gray-400 uppercase mb-4 flex justify-between items-center">
+                        <span>Git History</span>
+                        <span class="text-[10px] bg-[#21262d] px-2 py-0.5 rounded text-gray-400">master</span>
+                    </h3>
+                    
+                    <div class="space-y-0 relative flex-1 overflow-y-auto" id="commit-list">
+                        <!-- Commits Injected Here -->
+                    </div>
+                </div>
+
+                <!-- File Structure Stats -->
+                <div class="h-1/3 bg-[#0d1117] border border-[var(--term-border)] rounded-sm p-4">
+                    <h3 class="font-mono text-xs font-bold text-gray-400 uppercase mb-3">Project Entropy</h3>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs font-mono">
+                            <span class="text-gray-500">Files</span>
+                            <span class="text-[var(--term-blue)]" id="stat-files">12</span>
+                        </div>
+                        <div class="w-full bg-[#21262d] h-1 rounded-full overflow-hidden">
+                            <div id="bar-files" class="bg-[var(--term-blue)] h-full w-[20%] transition-all duration-500"></div>
+                        </div>
+                        
+                        <div class="flex justify-between text-xs font-mono mt-2">
+                            <span class="text-gray-500">Complexity</span>
+                            <span class="text-[var(--term-red)]" id="stat-complexity">Low</span>
+                        </div>
+                        <div class="w-full bg-[#21262d] h-1 rounded-full overflow-hidden">
+                            <div id="bar-complexity" class="bg-[var(--term-red)] h-full w-[10%] transition-all duration-500"></div>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-t border-[#21262d] text-[10px] text-gray-500 font-mono">
+                            <span class="text-[var(--term-green)]">✓</span> Carbon Dating: <span id="carbon-date">2023-01-15</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        lucide.createIcons();
+
+        // --- Data Definitions ---
+
+        const phases = [
+            {
+                id: 0,
+                name: "PHASE 1: THE MONOLITH (MVP)",
+                date: "2023-01-15",
+                description: "Initial rapid development for validation.",
+                stats: { files: 12, complexity: 15, complexityLabel: "Low" },
+                commits: [
+                    { hash: "a1b2c3d", msg: "Initial commit: basic CRUD for products", tag: "feat" },
+                    { hash: "e5f6g7h", msg: "Setup MySQL connection pool", tag: "chore" },
+                    { hash: "i8j9k0l", msg: "Add simple order processing logic", tag: "feat" }
+                ],
+                nodes: [
+                    { id: 'client', type: 'client', label: 'Client (Browser)', x: 100, y: 300 },
+                    { id: 'server', type: 'server', label: 'Monolith Server', x: 400, y: 300 },
+                    { id: 'db', type: 'db', label: 'MySQL', x: 700, y: 300 }
+                ],
+                links: [
+                    { from: 'client', to: 'server', type: 'http' },
+                    { from: 'server', to: 'db', type: 'sql' }
+                ]
+            },
+            {
+                id: 1,
+                name: "PHASE 2: CACHE LAYER (Performance)",
+                date: "2023-03-20",
+                description: "Database bottleneck resolved with Redis.",
+                stats: { files: 28, complexity: 40, complexityLabel: "Medium" },
+                commits: [
+                    { hash: "m1n2o3p", msg: "HOTFIX: DB Connection timeout under load", tag: "fix", highlight: true },
+                    { hash: "q4r5s6t", msg: "Introduce Redis for inventory cache", tag: "feat" },
+                    { hash: "u7v8w9x", msg: "Refactor: Extract cache service", tag: "refactor" }
+                ],
+                nodes: [
+                    { id: 'client', type: 'client', label: 'Client', x: 100, y: 300 },
+                    { id: 'server', type: 'server', label: 'Monolith Server', x: 400, y: 300 },
+                    { id: 'redis', type: 'cache', label: 'Redis', x: 550, y: 150 },
+                    { id: 'db', type: 'db', label: 'MySQL', x: 700, y: 300 }
+                ],
+                links: [
+                    { from: 'client', to: 'server', type: 'http' },
+                    { from: 'server', to: 'redis', type: 'cache' },
+                    { from: 'server', to: 'db', type: 'sql' }
+                ],
+                adr: {
+                    title: "ADR-002: Redis Caching",
+                    context: "High latency on product detail page.",
+                    decision: "Read-through cache strategy.",
+                    result: "p99 latency < 50ms."
+                }
+            },
+            {
+                id: 2,
+                name: "PHASE 3: MICROSERVICES (Scalability)",
+                date: "2023-08-10",
+                description: "Splitting domains to handle independent scaling.",
+                stats: { files: 85, complexity: 75, complexityLabel: "High" },
+                commits: [
+                    { hash: "y1z2a3b", msg: "Split User Service from monolith", tag: "refactor", highlight: true },
+                    { hash: "c4d5e6f", msg: "Init Order Service scaffold", tag: "feat" },
+                    { hash: "g7h8i9j", msg: "Add Nacos for service discovery", tag: "chore" }
+                ],
+                nodes: [
+                    { id: 'client', type: 'client', label: 'Gateway', x: 100, y: 300 },
+                    { id: 'nacos', type: 'infra', label: 'Nacos', x: 400, y: 100 },
+                    { id: 'user', type: 'service', label: 'User Svc', x: 350, y: 250 },
+                    { id: 'order', type: 'service', label: 'Order Svc', x: 350, y: 400 },
+                    { id: 'redis', type: 'cache', label: 'Redis', x: 600, y: 200 },
+                    { id: 'db', type: 'db', label: 'MySQL Cluster', x: 700, y: 350 }
+                ],
+                links: [
+                    { from: 'client', to: 'user', type: 'rpc' },
+                    { from: 'client', to: 'order', type: 'rpc' },
+                    { from: 'user', to: 'nacos', type: 'reg' },
+                    { from: 'order', to: 'nacos', type: 'reg' },
+                    { from: 'order', to: 'db', type: 'sql' },
+                    { from: 'order', to: 'redis', type: 'cache' }
+                ],
+                adr: {
+                    title: "ADR-005: Service Split",
+                    context: "Deployment coupling causing slow iterations.",
+                    decision: "Domain-Driven Design split.",
+                    result: "Independent deploy cycles."
+                }
+            },
+            {
+                id: 3,
+                name: "PHASE 4: CLOUD NATIVE (Resilience)",
+                date: "2024-01-05",
+                description: "Async processing and distributed consistency.",
+                stats: { files: 142, complexity: 90, complexityLabel: "Very High" },
+                commits: [
+                    { hash: "k1l2m3n", msg: "Integrate Kafka for order buffering", tag: "feat" },
+                    { hash: "o4p5q6r", msg: "Implement distributed lock with Redisson", tag: "feat" },
+                    { hash: "s7t8u9v", msg: "Add Sentinel for flow control", tag: "chore" }
+                ],
+                nodes: [
+                    { id: 'client', type: 'client', label: 'Gateway', x: 50, y: 300 },
+                    { id: 'order', type: 'service', label: 'Order Svc', x: 250, y: 300 },
+                    { id: 'kafka', type: 'mq', label: 'Kafka', x: 450, y: 300 },
+                    { id: 'consumer', type: 'service', label: 'Consumer', x: 650, y: 300 },
+                    { id: 'redis', type: 'cache', label: 'Redis Cluster', x: 250, y: 150 },
+                    { id: 'db', type: 'db', label: 'TiDB', x: 800, y: 300 }
+                ],
+                links: [
+                    { from: 'client', to: 'order', type: 'rpc' },
+                    { from: 'order', to: 'redis', type: 'lock' },
+                    { from: 'order', to: 'kafka', type: 'mq' },
+                    { from: 'kafka', to: 'consumer', type: 'mq' },
+                    { from: 'consumer', to: 'db', type: 'sql' }
+                ],
+                adr: {
+                    title: "ADR-009: Async Decoupling",
+                    context: "Peak traffic crashing DB connections.",
+                    decision: "MQ buffer for write flattening.",
+                    result: "Zero downtime during flash sales."
+                }
+            }
+        ];
+
+        // --- Controller Logic ---
+
+        const slider = document.getElementById('time-slider');
+        const progressBar = document.getElementById('timeline-bar');
+        const phaseLabel = document.getElementById('current-phase-label');
+        
+        slider.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            setPhase(val);
+        });
+
+        function setPhase(index) {
+            slider.value = index;
+            const progress = (index / 3) * 100;
+            progressBar.style.width = `${progress}%`;
+            
+            // Update UI Labels
+            phaseLabel.innerText = phases[index].name;
+            document.getElementById('carbon-date').innerText = phases[index].date;
+            
+            // Update Stats
+            document.getElementById('stat-files').innerText = phases[index].stats.files;
+            document.getElementById('bar-files').style.width = `${(phases[index].stats.files / 150) * 100}%`;
+            
+            document.getElementById('stat-complexity').innerText = phases[index].stats.complexityLabel;
+            document.getElementById('bar-complexity').style.width = `${phases[index].stats.complexity}%`;
+
+            // Render Commits
+            renderCommits(phases[index].commits);
+
+            // Render Architecture
+            renderArchitecture(phases[index]);
+
+            // Show ADR if exists
+            const adrCard = document.getElementById('adr-card');
+            if (phases[index].adr) {
+                adrCard.querySelector('div:first-child').innerHTML = `<i data-lucide="alert-triangle" class="w-3 h-3 inline mr-2"></i>${phases[index].adr.title}`;
+                const paragraphs = adrCard.querySelectorAll('p');
+                paragraphs[0].innerText = phases[index].adr.context;
+                paragraphs[1].innerText = phases[index].adr.decision;
+                paragraphs[2].innerText = phases[index].adr.result;
+                
+                adrCard.style.transform = 'translateY(0)';
+                lucide.createIcons();
+            } else {
+                adrCard.style.transform = 'translateY(120%)';
+            }
+        }
+
+        function renderCommits(commits) {
+            const container = document.getElementById('commit-list');
+            container.innerHTML = '';
+            
+            commits.forEach((commit, i) => {
+                const el = document.createElement('div');
+                el.className = `flex gap-3 mb-3 p-2 rounded hover:bg-[#161b22] transition-colors cursor-pointer group ${commit.highlight ? 'border-l-2 border-[var(--term-orange)]' : 'border-l-2 border-transparent'}`;
+                el.style.animation = `fadeIn 0.3s ease forwards ${i * 0.1}s`;
+                el.style.opacity = '0';
+                
+                let tagColor = 'text-gray-500 border-gray-700';
+                if (commit.tag === 'feat') tagColor = 'text-[var(--term-green)] border-[var(--term-green)]/30';
+                if (commit.tag === 'fix') tagColor = 'text-[var(--term-red)] border-[var(--term-red)]/30';
+                if (commit.tag === 'refactor') tagColor = 'text-[var(--term-orange)] border-[var(--term-orange)]/30';
+
+                el.innerHTML = `
+                    <div class="font-mono text-[10px] text-[var(--term-blue)] pt-1 opacity-50 group-hover:opacity-100">${commit.hash}</div>
+                    <div class="flex-1">
+                        <div class="text-xs text-gray-300 mb-1 ${commit.highlight ? 'glitch-text font-bold' : ''}">${commit.msg}</div>
+                        <span class="text-[9px] px-1.5 py-0.5 border rounded-full ${tagColor}">${commit.tag}</span>
+                    </div>
+                `;
+                container.appendChild(el);
+            });
+        }
+
+        function renderArchitecture(phase) {
+            const container = document.getElementById('arch-viz');
+            container.innerHTML = ''; // Clear previous
+
+            // Create SVG container for lines
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("class", "absolute inset-0 w-full h-full pointer-events-none");
+            container.appendChild(svg);
+
+            // Draw Lines
+            phase.links.forEach(link => {
+                const fromNode = phase.nodes.find(n => n.id === link.from);
+                const toNode = phase.nodes.find(n => n.id === link.to);
+                
+                if (fromNode && toNode) {
+                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    line.setAttribute("x1", fromNode.x + 40); // center of node width 80
+                    line.setAttribute("y1", fromNode.y + 30); // center of node height 60
+                    line.setAttribute("x2", toNode.x + 40);
+                    line.setAttribute("y2", toNode.y + 30);
+                    
+                    let strokeColor = "#30363d";
+                    if (link.type === 'http') strokeColor = "#58a6ff";
+                    if (link.type === 'mq') strokeColor = "#d29922";
+                    
+                    line.setAttribute("stroke", strokeColor);
+                    line.setAttribute("stroke-width", "2");
+                    
+                    if (link.type === 'mq' || link.type === 'http') {
+                        line.classList.add("connection-line");
+                    }
+                    
+                    svg.appendChild(line);
+                }
+            });
+
+            // Draw Nodes
+            phase.nodes.forEach((node, i) => {
+                const el = document.createElement('div');
+                el.className = `absolute w-20 h-[60px] border rounded flex flex-col items-center justify-center bg-[#0d1117] hover:scale-110 transition-transform cursor-pointer node-enter shadow-lg z-10`;
+                el.style.left = `${node.x}px`;
+                el.style.top = `${node.y}px`;
+                el.style.animationDelay = `${i * 0.05}s`;
+
+                // Node Styling based on type
+                let borderColor = "border-gray-700";
+                let icon = "box";
+                if (node.type === 'client') { borderColor = "border-white"; icon = "monitor"; }
+                if (node.type === 'db') { borderColor = "border-[var(--term-green)]"; icon = "database"; }
+                if (node.type === 'cache') { borderColor = "border-[var(--term-red)]"; icon = "zap"; }
+                if (node.type === 'mq') { borderColor = "border-[var(--term-orange)]"; icon = "layers"; }
+                
+                el.classList.add(borderColor);
+
+                el.innerHTML = `
+                    <i data-lucide="${icon}" class="w-5 h-5 mb-1 text-gray-400"></i>
+                    <span class="text-[9px] font-mono text-center leading-tight">${node.label}</span>
+                `;
+                
+                // Add click handler for ADR
+                el.onclick = () => {
+                    const adr = document.getElementById('adr-card');
+                    adr.classList.add('ring-2', 'ring-[var(--term-blue)]');
+                    setTimeout(() => adr.classList.remove('ring-2', 'ring-[var(--term-blue)]'), 500);
+                };
+
+                container.appendChild(el);
+            });
+
+            lucide.createIcons();
+        }
+
+        // Initialize
+        setPhase(0);
+        
+        // Add global style for animations
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @keyframes fadeIn { to { opacity: 1; } }
+        `;
+        document.head.appendChild(style);
+
+    </script>
+</body>
+</html>

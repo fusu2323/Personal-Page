@@ -5,6 +5,7 @@ import { experiences } from '@/data/resume';
 import { FaSearch } from 'react-icons/fa';
 import { useSound } from '@/hooks/useSound';
 import { FaCircleXmark, FaSpinner, FaDatabase, FaBolt, FaSitemap, FaListCheck } from 'react-icons/fa6';
+import { useNavigate } from 'react-router-dom';
 
 // SQL Visualization Components
 const SqlVisualizer: React.FC<{ query: string; onComplete: () => void }> = ({ query, onComplete }) => {
@@ -149,6 +150,7 @@ const SqlVisualizer: React.FC<{ query: string; onComplete: () => void }> = ({ qu
 };
 
 export const Experience: React.FC = () => {
+  const navigate = useNavigate();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState(''); // Visual input
   const [activeQuery, setActiveQuery] = useState(''); // Actual filter
@@ -232,6 +234,20 @@ export const Experience: React.FC = () => {
     runStep();
   };
 
+  const handleArchaeologyClick = (e: React.MouseEvent, id: number) => {
+    e.stopPropagation();
+    // 模拟传送特效
+    const el = document.getElementById(`arch-btn-${id}`);
+    if (el) {
+      el.innerHTML = "INITIALIZING WARP DRIVE...";
+      el.classList.add("text-blue-400", "animate-pulse");
+    }
+    
+    setTimeout(() => {
+      navigate(`/archaeology/seckill-system`);
+    }, 800);
+  };
+
   return (
     <section className="mb-20" id="experience">
       <div className="flex items-center justify-between mb-8">
@@ -300,8 +316,8 @@ export const Experience: React.FC = () => {
               </div>
               <p className="text-term-blue text-sm mb-2">{exp.role}</p>
               <p className="text-gray-400 text-sm">{exp.desc}</p>
-              <div className="mt-3 text-xs font-mono text-term-green opacity-0 group-hover:opacity-100 transition-opacity">
-                {deployedCache.has(exp.id) ? "[Click to view logs]" : "[Click to execute deployment pipeline]"}
+              <div className="mt-3 text-xs font-mono text-term-green opacity-0 group-hover:opacity-100 transition-opacity flex justify-between items-center">
+                <span>{deployedCache.has(exp.id) ? "[Click to view logs]" : "[Click to execute deployment pipeline]"}</span>
               </div>
             </TerminalWindow>
           </motion.div>
@@ -396,6 +412,29 @@ export const Experience: React.FC = () => {
                         </motion.div>
                       ))}
                     </div>
+
+                    {/* Archaeology Link Button */}
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.8 }}
+                      className="mt-8 pt-6 border-t border-gray-800"
+                    >
+                      <button 
+                        id={`arch-btn-${selectedId}`}
+                        onClick={(e) => handleArchaeologyClick(e, selectedId!)}
+                        className="group flex items-center gap-3 px-4 py-2 bg-[#161b22] border border-term-blue/30 hover:border-term-blue text-gray-300 hover:text-white rounded transition-all w-full md:w-auto"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-term-blue/10 flex items-center justify-center group-hover:bg-term-blue/20">
+                           <FaSitemap className="text-term-blue text-sm" />
+                        </div>
+                        <div className="text-left">
+                          <div className="text-xs text-term-blue font-bold uppercase tracking-wider">Project Archaeology</div>
+                          <div className="text-[10px] text-gray-500 font-mono">View Architecture Evolution</div>
+                        </div>
+                        <FaBolt className="ml-auto text-yellow-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </button>
+                    </motion.div>
                     
                     <div className="pt-4 text-term-blue text-xs animate-pulse font-mono">
                       _ End of file
